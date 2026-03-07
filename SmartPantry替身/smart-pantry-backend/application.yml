@@ -1,0 +1,21 @@
+server:
+  port: 8080 # Java 服务跑在 8080 端口
+
+spring:
+  datasource:
+    # 注意修改为你的 MySQL 账号密码
+    url: jdbc:mysql://127.0.0.1:3306/smart_pantry?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+    username: root
+    password: 091700xixi # 改成你自己的密码
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+# MyBatis-Plus 配置
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true # 开启驼峰命名自动映射
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl # 在控制台打印SQL，方便你调试
+
+# 自定义配置：Python AI 引擎的地址
+ai:
+  engine:
+    url: http://localhost:8000
