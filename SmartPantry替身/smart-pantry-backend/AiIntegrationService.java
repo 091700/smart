@@ -21,28 +21,26 @@ public class AiIntegrationService {
     /**
      * 召唤 AI 1：预测食材还能放几天
      */
-    public Double predictFreshness(Integer ingId, Integer storageType, Float temp, Integer status) {
+    public Double predictFreshness(Integer catId, Integer baseShelfLife, Integer storageType, Float temp, Integer status) {
         String url = aiEngineUrl + "/api/ai/predict_freshness";
         
         // 组装发给 Python 的 JSON 数据
         Map<String, Object> request = new HashMap<>();
-        request.put("ing_id", ingId);
+        request.put("cat_id", catId);
+        request.put("base_shelf_life", baseShelfLife);
         request.put("storage_type", storageType);
         request.put("temp", temp);
         request.put("initial_status", status);
-
         try {
-            // 发起 POST 请求
-            ResponseEntity<Map> response = restTemplate.postForEntity(url, request, Map.class);
-            if (response.getBody() != null && "success".equals(response.getBody().get("status"))) {
-                // 取出 AI 预测的天数
-                return Double.valueOf(response.getBody().get("predicted_days").toString());
-            }
-        } catch (Exception e) {
-            System.err.println("AI 1 预测失败，请检查 Python 服务是否启动！");
+        ResponseEntity<Map> response = restTemplate.postForEntity(url, request, Map.class);
+        if (response.getBody() != null && "success".equals(response.getBody().get("status"))) {
+            return Double.valueOf(response.getBody().get("predicted_days").toString());
         }
-        return 3.0; // 如果 AI 挂了，给个默认保底天数
+    } catch (Exception e) {
+        System.err.println("AI 1 预测失败，请检查 Python 引擎是否切换到了 Zero-Shot 版本！");
     }
+    return 3.0; // 保底
+}
 
     /**
      * 召唤 AI 2：评估暗黑料理指数
@@ -63,5 +61,31 @@ public class AiIntegrationService {
             System.err.println("AI 2 预测失败！");
         }
         return 50.0;
+    }
+    /**
+     * 调用本地 LLM 提取未知食材特征
+     */
+    public Map<String, Object> extractIngredientFeatures(String ingredientName) {
+        String url = aiEngineUrl + "/api/ai/extract_features";
+        Map<String, String> request = new HashMap<>();
+        request.put("ingredient_name", ingredientName);
+        try {
+            ResponseEntity<Map> response = restTemplate.postForEntity(url, request, Map.class);
+            return (Map<String, Object>) response.getBody().get("data");
+        } catch (Exception e) {
+            Map<String, Object> fallback = new HashMap<>();
+            fallback.put("category", "其他");
+            fallback.put("base_shelf_life", 3);
+            return fallback;
+        }
+    }
+
+    // 映射中文类别到 AI-1 的数字张量
+    public Integer mapCategoryToId(String category) {
+        switch (category) {
+            case "蔬菜": return 1; case "肉禽": return 2; case "水果": return 3;
+            case "海鲜": return 4; case "豆制品": return 5; case "加工食品": return 6;
+            case "调料": return 7; default: return 8;
+        }
     }
 }
