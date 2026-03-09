@@ -25,7 +25,8 @@ else:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cpu")
+logger.info("⚠️ 检测到超前架构显卡，已强制降级为 CPU 稳定模式")
 logger.info(f"🚀 核心引擎启动！当前设备: {device}")
 
 # ==========================================
@@ -137,13 +138,11 @@ class ExtractRequest(BaseModel):
 
 class FreshnessRequest(BaseModel):
     # 与 Java AiIntegrationService.java 的 Map 字段严格对应
-    ing_id: int 
+    cat_id: int = 8                    
+    base_shelf_life: float = 3.0       
     storage_type: int
     temp: float
     initial_status: int
-    # 兼容字段：如果 Java 传了这些就用，没传就用 LLM 提取
-    cat_id: Optional[int] = 8 
-    base_shelf_life: Optional[float] = 3.0
 
 class HarmonyRequest(BaseModel):
     ing_ids: List[int]
